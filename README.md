@@ -29,3 +29,9 @@ git init
 git add .
 git commit -m "Initial commit"
 git push
+
+# deploy
+render.com
+
+# reference
+https://www.youtube.com/watch?v=pmXfvd6Zqg4
