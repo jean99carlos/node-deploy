@@ -29,7 +29,7 @@ model AceiteTermo {
 
 model Ano {
   id        String @id @default(uuid())
-  descricao String
+  descricao String @unique()
   Polo      Polo[]
 }
 

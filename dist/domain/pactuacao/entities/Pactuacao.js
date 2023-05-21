@@ -7,6 +7,10 @@ var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -23,10 +27,18 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __publicField = (obj, key, value) => {
   __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
   return value;
 };
+
+// src/domain/pactuacao/entities/Pactuacao.ts
+var Pactuacao_exports = {};
+__export(Pactuacao_exports, {
+  Pactuacao: () => Pactuacao
+});
+module.exports = __toCommonJS(Pactuacao_exports);
 
 // src/core/domain/Entity.ts
 var import_crypto = __toESM(require("crypto"));
@@ -83,40 +95,21 @@ var Result = class {
 };
 __name(Result, "Result");
 
-// src/domain/ano/entities/Ano.ts
-var Ano = class extends Entity {
+// src/domain/pactuacao/entities/Pactuacao.ts
+var Pactuacao = class extends Entity {
   constructor(props, id) {
     super(props, id);
   }
   static create(props, id) {
-    try {
-      Number.parseInt(props.descricao);
-    } catch (ex) {
-      return Result.fail("Descri\xE7\xE3o deve ser n\xFAmero");
+    if (props.descricao.length == 0) {
+      return Result.fail("Descri\xE7\xE3o n\xE3o deve ser vazia");
     }
-    if (props.descricao.length != 4) {
-      return Result.fail("Ano deve ter 4 d\xEDgitos");
-    }
-    const ano = new Ano(props, id);
-    return Result.ok(ano);
+    const pactuacao = new Pactuacao(props, id);
+    return Result.ok(pactuacao);
   }
 };
-__name(Ano, "Ano");
-
-// src/domain/ano/entities/Ano.spec.ts
-describe("Ano", () => {
-  it("deve criar um ano", () => {
-    const descricao = "2023";
-    const anos = Ano.create({
-      descricao
-    });
-    expect(anos.getValue()).toBeInstanceOf(Ano);
-  });
-  it("deve ter ano numerico", () => {
-    const descricao = "2023a";
-    const anos = Ano.create({
-      descricao
-    });
-    expect(anos.isFailure).toBeTruthy();
-  });
+__name(Pactuacao, "Pactuacao");
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  Pactuacao
 });

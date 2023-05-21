@@ -7,6 +7,10 @@ var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -23,22 +27,18 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __publicField = (obj, key, value) => {
   __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
   return value;
 };
 
-// src/core/domain/Entity.ts
-var import_crypto = __toESM(require("crypto"));
-var Entity = class {
-  constructor(props, id) {
-    __publicField(this, "id");
-    __publicField(this, "props");
-    this.props = props;
-    this.id = id ?? import_crypto.default.randomUUID();
-  }
-};
-__name(Entity, "Entity");
+// src/infrastructure/crosscutting/adapter/mappers/aplication/PactuacaoAppMapper.ts
+var PactuacaoAppMapper_exports = {};
+__export(PactuacaoAppMapper_exports, {
+  PactuacaoAppMapper: () => PactuacaoAppMapper
+});
+module.exports = __toCommonJS(PactuacaoAppMapper_exports);
 
 // src/core/domain/Result.ts
 var Result = class {
@@ -83,40 +83,61 @@ var Result = class {
 };
 __name(Result, "Result");
 
-// src/domain/ano/entities/Ano.ts
-var Ano = class extends Entity {
+// src/core/domain/Entity.ts
+var import_crypto = __toESM(require("crypto"));
+var Entity = class {
+  constructor(props, id) {
+    __publicField(this, "id");
+    __publicField(this, "props");
+    this.props = props;
+    this.id = id ?? import_crypto.default.randomUUID();
+  }
+};
+__name(Entity, "Entity");
+
+// src/domain/pactuacao/entities/Pactuacao.ts
+var Pactuacao = class extends Entity {
   constructor(props, id) {
     super(props, id);
   }
   static create(props, id) {
-    try {
-      Number.parseInt(props.descricao);
-    } catch (ex) {
-      return Result.fail("Descri\xE7\xE3o deve ser n\xFAmero");
+    if (props.descricao.length == 0) {
+      return Result.fail("Descri\xE7\xE3o n\xE3o deve ser vazia");
     }
-    if (props.descricao.length != 4) {
-      return Result.fail("Ano deve ter 4 d\xEDgitos");
-    }
-    const ano = new Ano(props, id);
-    return Result.ok(ano);
+    const pactuacao = new Pactuacao(props, id);
+    return Result.ok(pactuacao);
   }
 };
-__name(Ano, "Ano");
+__name(Pactuacao, "Pactuacao");
 
-// src/domain/ano/entities/Ano.spec.ts
-describe("Ano", () => {
-  it("deve criar um ano", () => {
-    const descricao = "2023";
-    const anos = Ano.create({
-      descricao
+// src/infrastructure/crosscutting/adapter/mappers/aplication/PactuacaoAppMapper.ts
+var _PactuacaoAppMapper = class {
+  constructor() {
+  }
+  static getInstance() {
+    if (!_PactuacaoAppMapper.instance) {
+      _PactuacaoAppMapper.instance = new _PactuacaoAppMapper();
+    }
+    return _PactuacaoAppMapper.instance;
+  }
+  toEntity(raw) {
+    return Pactuacao.create({
+      descricao: raw.descricao,
+      programa: raw.programa
+    }, raw.id);
+  }
+  toDTO(dto) {
+    return Result.ok({
+      id: dto.id,
+      descricao: dto.props.descricao,
+      programa: dto.props.programa
     });
-    expect(anos.getValue()).toBeInstanceOf(Ano);
-  });
-  it("deve ter ano numerico", () => {
-    const descricao = "2023a";
-    const anos = Ano.create({
-      descricao
-    });
-    expect(anos.isFailure).toBeTruthy();
-  });
+  }
+};
+var PactuacaoAppMapper = _PactuacaoAppMapper;
+__name(PactuacaoAppMapper, "PactuacaoAppMapper");
+__publicField(PactuacaoAppMapper, "instance");
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  PactuacaoAppMapper
 });

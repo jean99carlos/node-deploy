@@ -1,4 +1,4 @@
-import { IAnoController } from "./interfaces/ano/IAnoController";
+import { IAnoController } from "../../interfaces/ano/IAnoController";
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 
 export class RouteAno {

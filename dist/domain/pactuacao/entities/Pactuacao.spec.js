@@ -83,40 +83,38 @@ var Result = class {
 };
 __name(Result, "Result");
 
-// src/domain/ano/entities/Ano.ts
-var Ano = class extends Entity {
+// src/domain/pactuacao/entities/Pactuacao.ts
+var Pactuacao = class extends Entity {
   constructor(props, id) {
     super(props, id);
   }
   static create(props, id) {
-    try {
-      Number.parseInt(props.descricao);
-    } catch (ex) {
-      return Result.fail("Descri\xE7\xE3o deve ser n\xFAmero");
+    if (props.descricao.length == 0) {
+      return Result.fail("Descri\xE7\xE3o n\xE3o deve ser vazia");
     }
-    if (props.descricao.length != 4) {
-      return Result.fail("Ano deve ter 4 d\xEDgitos");
-    }
-    const ano = new Ano(props, id);
-    return Result.ok(ano);
+    const pactuacao = new Pactuacao(props, id);
+    return Result.ok(pactuacao);
   }
 };
-__name(Ano, "Ano");
+__name(Pactuacao, "Pactuacao");
 
-// src/domain/ano/entities/Ano.spec.ts
-describe("Ano", () => {
-  it("deve criar um ano", () => {
-    const descricao = "2023";
-    const anos = Ano.create({
-      descricao
+// src/domain/pactuacao/entities/Pactuacao.spec.ts
+describe("Pactua\xE7\xE3o", () => {
+  it("Deve criar um objeto v\xE1lido", () => {
+    const pactuacao = Pactuacao.create({
+      descricao: "Pronatec 2023/1",
+      programa: "PRONATEC"
     });
-    expect(anos.getValue()).toBeInstanceOf(Ano);
+    expect(pactuacao.isSuccess).toBeTruthy();
+    expect(pactuacao.getValue()).toBeInstanceOf(Pactuacao);
+    expect(pactuacao.getValue().props.descricao).toBe("Pronatec 2023/1");
+    expect(pactuacao.getValue().props.programa).toBe("PRONATEC");
   });
-  it("deve ter ano numerico", () => {
-    const descricao = "2023a";
-    const anos = Ano.create({
-      descricao
+  it("n\xE3o deve permitir descri\xE7\xE3o vazia", () => {
+    const pactuacao = Pactuacao.create({
+      descricao: "",
+      programa: ""
     });
-    expect(anos.isFailure).toBeTruthy();
+    expect(pactuacao.isFailure).toBeTruthy();
   });
 });

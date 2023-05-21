@@ -1,8 +1,9 @@
 import { Ano } from "../../../../../domain/ano/entities/Ano";
 import { AnoDTO } from "../../../../../aplication/dto/AnoDTO";
 import { Result } from "../../../../../core/domain/Result";
+import { IAnoAppMapper } from "../../../../../aplication/interfaces/mapper/IAnoAppMapper";
 
-export class AnoAppMapper {
+export class AnoAppMapper implements IAnoAppMapper {
   private static instance: AnoAppMapper;
 
   private constructor() {}
