@@ -1,4 +1,4 @@
-import { IAnoController } from "../../core/controller/IAnoController";
+import { IAnoController } from "./interfaces/ano/IAnoController";
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 
 export class RouteAno {
@@ -11,5 +11,23 @@ export class RouteAno {
     app.get("/ano", async (request: FastifyRequest) => {
       return await this.controller.get(request);
     });
+    app.get(
+      "/ano/:id",
+      async (request: FastifyRequest, reply: FastifyReply) => {
+        return await this.controller.getById(request, reply);
+      }
+    );
+    app.delete(
+      "/ano/:id",
+      async (request: FastifyRequest, reply: FastifyReply) => {
+        return await this.controller.delete(request, reply);
+      }
+    );
+    app.put(
+      "/ano/:id",
+      async (request: FastifyRequest, reply: FastifyReply) => {
+        return await this.controller.update(request, reply);
+      }
+    );
   }
 }

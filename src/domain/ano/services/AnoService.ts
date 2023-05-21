@@ -6,23 +6,27 @@ import { Result } from "../../../core/domain/Result";
 export class AnoService implements IAnoService {
   constructor(private repo: IAnoRepositorio) {}
 
-  get(): Promise<Result<Ano[]>> {
+  async get(): Promise<Result<Ano[]>> {
     return this.repo.get();
   }
 
-  getById(id: string): Promise<Result<Ano>> {
+  async getById(id: string): Promise<Result<Ano>> {
     return this.repo.getById(id);
   }
 
-  create(param: Ano): Promise<Result<Ano>> {
+  async create(param: Ano): Promise<Result<Ano>> {
     return this.repo.create(param);
   }
 
-  update(param: Ano): Promise<Result<Ano>> {
+  async update(param: Ano): Promise<Result<Ano>> {
     return this.repo.update(param);
   }
 
-  delete(param: Ano): Promise<Result<void>> {
-    return this.repo.delete(param);
+  async delete(id: string): Promise<Result<Ano>> {
+    const register = await this.getById(id);
+    if (register.isFailure) {
+      return Result.fail<Ano>(register.error ?? "");
+    }
+    return this.repo.delete(register.getValue());
   }
 }

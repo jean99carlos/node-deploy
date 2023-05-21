@@ -41,6 +41,15 @@ var RouteAno = class {
     app.get("/ano", async (request) => {
       return await this.controller.get(request);
     });
+    app.get("/ano/:id", async (request, reply) => {
+      return await this.controller.getById(request, reply);
+    });
+    app.delete("/ano/:id", async (request, reply) => {
+      return await this.controller.delete(request, reply);
+    });
+    app.put("/ano/:id", async (request, reply) => {
+      return await this.controller.update(request, reply);
+    });
   }
 };
 __name(RouteAno, "RouteAno");

@@ -29,25 +29,74 @@ __export(AnoService_exports, {
   AnoService: () => AnoService
 });
 module.exports = __toCommonJS(AnoService_exports);
+
+// src/core/domain/Result.ts
+var Result = class {
+  constructor(isSuccess, error, value) {
+    __publicField(this, "isSuccess");
+    __publicField(this, "isFailure");
+    __publicField(this, "error");
+    __publicField(this, "_value");
+    if (isSuccess && error) {
+      throw new Error(`InvalidOperation: A result cannot be 
+          successful and contain an error`);
+    }
+    if (!isSuccess && !error) {
+      throw new Error(`InvalidOperation: A failing result 
+          needs to contain an error message`);
+    }
+    this.isSuccess = isSuccess;
+    this.isFailure = !isSuccess;
+    this.error = error;
+    this._value = value;
+    Object.freeze(this);
+  }
+  getValue() {
+    if (!this.isSuccess || this._value == void 0) {
+      throw new Error(`Cant retrieve the value from a failed result.`);
+    }
+    return this._value;
+  }
+  static ok(value) {
+    return new Result(true, void 0, value);
+  }
+  static fail(error) {
+    return new Result(false, error);
+  }
+  static combine(results) {
+    for (let result of results) {
+      if (result.isFailure)
+        return result;
+    }
+    return Result.ok();
+  }
+};
+__name(Result, "Result");
+
+// src/domain/ano/services/AnoService.ts
 var AnoService = class {
   constructor(repo) {
     __publicField(this, "repo");
     this.repo = repo;
   }
-  get() {
+  async get() {
     return this.repo.get();
   }
-  getById(id) {
+  async getById(id) {
     return this.repo.getById(id);
   }
-  create(param) {
+  async create(param) {
     return this.repo.create(param);
   }
-  update(param) {
+  async update(param) {
     return this.repo.update(param);
   }
-  delete(param) {
-    return this.repo.delete(param);
+  async delete(id) {
+    const register = await this.getById(id);
+    if (register.isFailure) {
+      return Result.fail(register.error ?? "");
+    }
+    return this.repo.delete(register.getValue());
   }
 };
 __name(AnoService, "AnoService");

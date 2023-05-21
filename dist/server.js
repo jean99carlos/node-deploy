@@ -209,7 +209,7 @@ var AnoRepositorio = class {
         id: param.id
       }
     });
-    return Result.ok();
+    return Result.ok(param);
   }
   async getById(id) {
     const anoDTO = await this.prisma.ano.findUnique({
@@ -232,27 +232,35 @@ var AnoService = class {
     __publicField(this, "repo");
     this.repo = repo;
   }
-  get() {
+  async get() {
     return this.repo.get();
   }
-  getById(id) {
+  async getById(id) {
     return this.repo.getById(id);
   }
-  create(param) {
+  async create(param) {
     return this.repo.create(param);
   }
-  update(param) {
+  async update(param) {
     return this.repo.update(param);
   }
-  delete(param) {
-    return this.repo.delete(param);
+  async delete(id) {
+    const register = await this.getById(id);
+    if (register.isFailure) {
+      return Result.fail(register.error ?? "");
+    }
+    return this.repo.delete(register.getValue());
   }
 };
 __name(AnoService, "AnoService");
 
 // src/presentation/controllers/ano/AnoController.ts
 var import_zod = require("zod");
+var createParamsSchema = import_zod.z.object({
+  id: import_zod.z.string()
+});
 var createAnoSchema = import_zod.z.object({
+  id: import_zod.z.string().optional(),
   descricao: import_zod.z.string()
 });
 var AnoController = class {
@@ -267,6 +275,28 @@ var AnoController = class {
   }
   async get(request) {
     return await this.service.get();
+  }
+  async getById(request) {
+    const param = createParamsSchema.parse(request.params);
+    return await this.service.getById(param.id);
+  }
+  async delete(request, reply) {
+    const param = createParamsSchema.parse(request.params);
+    if (param.id == void 0) {
+      return reply.status(500).send("Not found");
+    }
+    const result = await this.service.delete(param.id);
+    if (result.isFailure) {
+      return reply.status(201).send(result);
+    }
+    return reply.status(201).send(result);
+  }
+  async update(request, reply) {
+    const param = createParamsSchema.parse(request.params);
+    const anoDTO = createAnoSchema.parse(request.body);
+    anoDTO.id = param.id;
+    const created = await this.service.update(anoDTO);
+    return reply.status(201).send(created);
   }
 };
 __name(AnoController, "AnoController");
@@ -317,12 +347,45 @@ var AnoAppService = class {
     const dtosParse = dtos.map((x) => x.getValue());
     return Result.ok(dtosParse);
   }
+  async getById(id) {
+    if (id == void 0) {
+      return Result.fail("Id must be informed");
+    }
+    const result = await this.service.getById(id);
+    if (result.isFailure) {
+      return Result.fail(result.error ?? "");
+    }
+    const dto = this.mapper.toDTO(result.getValue());
+    return dto;
+  }
   async create(dto) {
     const entity = this.mapper.toEntity(dto);
     if (entity.isFailure) {
       return Result.fail(entity.error ?? "");
     }
     const result = await this.service.create(entity.getValue());
+    if (result.isFailure) {
+      return Result.fail(result.error ?? "");
+    }
+    const obj = this.mapper.toDTO(result.getValue());
+    if (obj.isFailure) {
+      return Result.fail(obj.error ?? "");
+    }
+    return Result.ok(obj.getValue());
+  }
+  async delete(id) {
+    const result = await this.service.delete(id);
+    if (result.isFailure) {
+      return Result.fail(result.error ?? "");
+    }
+    return this.mapper.toDTO(result.getValue());
+  }
+  async update(dto) {
+    const entity = this.mapper.toEntity(dto);
+    if (entity.isFailure) {
+      return Result.fail(entity.error ?? "");
+    }
+    const result = await this.service.update(entity.getValue());
     if (result.isFailure) {
       return Result.fail(result.error ?? "");
     }
@@ -347,6 +410,15 @@ var RouteAno = class {
     });
     app.get("/ano", async (request) => {
       return await this.controller.get(request);
+    });
+    app.get("/ano/:id", async (request, reply) => {
+      return await this.controller.getById(request, reply);
+    });
+    app.delete("/ano/:id", async (request, reply) => {
+      return await this.controller.delete(request, reply);
+    });
+    app.put("/ano/:id", async (request, reply) => {
+      return await this.controller.update(request, reply);
     });
   }
 };

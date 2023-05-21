@@ -19,7 +19,7 @@ export class AnoRepositorio implements IAnoRepositorio {
   }
 
   async create(param: Ano): Promise<Result<Ano>> {
-    console.log(param)
+    console.log(param);
     const anoDTO = this.mapper.toPersistence(param);
     if (anoDTO.isFailure) {
       return Result.fail<Ano>(anoDTO.error ?? "");
@@ -41,16 +41,16 @@ export class AnoRepositorio implements IAnoRepositorio {
     return updatedAno;
   }
 
-  async delete(param: Ano): Promise<Result<void>> {
+  async delete(param: Ano): Promise<Result<Ano>> {
     const result = await this.prisma.ano.delete({
       where: { id: param.id },
     });
-    return Result.ok();
+    return Result.ok(param);
   }
 
-  async getById(id: string): Promise<Result<Ano>> {
+  async getById(id:string): Promise<Result<Ano>> {
     const anoDTO = await this.prisma.ano.findUnique({
-      where: { id },
+      where: { id: id },
     });
     if (anoDTO == null) {
       return Result.fail<Ano>("Não encontrado");

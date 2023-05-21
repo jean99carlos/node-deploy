@@ -23,19 +23,16 @@ var __publicField = (obj, key, value) => {
   return value;
 };
 
-// src/presentation/controllers/ano/AnoController.ts
+// src/presentation/interfaces/AnoController.ts
 var AnoController_exports = {};
 __export(AnoController_exports, {
   default: () => AnoController
 });
 module.exports = __toCommonJS(AnoController_exports);
 var import_zod = require("zod");
-var createParamsSchema = import_zod.z.object({
-  id: import_zod.z.string()
-});
 var createAnoSchema = import_zod.z.object({
   id: import_zod.z.string().optional(),
-  descricao: import_zod.z.string()
+  descricao: import_zod.z.string().optional()
 });
 var AnoController = class {
   constructor(service) {
@@ -51,26 +48,22 @@ var AnoController = class {
     return await this.service.get();
   }
   async getById(request) {
-    const param = createParamsSchema.parse(request.params);
-    return await this.service.getById(param.id);
+    const anoDTO = createAnoSchema.parse(request.params);
+    if (anoDTO.id == void 0) {
+      return null;
+    }
+    return await this.service.getById(anoDTO.id);
   }
   async delete(request, reply) {
-    const param = createParamsSchema.parse(request.params);
-    if (param.id == void 0) {
+    const anoDTO = createAnoSchema.parse(request.params);
+    if (anoDTO.id == void 0) {
       return reply.status(500).send("Not found");
     }
-    const result = await this.service.delete(param.id);
+    const result = await this.service.delete(anoDTO.id);
     if (result.isFailure) {
-      return reply.status(201).send(result);
+      return reply.status(500).send(result);
     }
     return reply.status(201).send(result);
-  }
-  async update(request, reply) {
-    const param = createParamsSchema.parse(request.params);
-    const anoDTO = createAnoSchema.parse(request.body);
-    anoDTO.id = param.id;
-    const created = await this.service.update(anoDTO);
-    return reply.status(201).send(created);
   }
 };
 __name(AnoController, "AnoController");

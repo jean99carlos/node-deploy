@@ -161,12 +161,45 @@ var AnoAppService = class {
     const dtosParse = dtos.map((x) => x.getValue());
     return Result.ok(dtosParse);
   }
+  async getById(id) {
+    if (id == void 0) {
+      return Result.fail("Id must be informed");
+    }
+    const result = await this.service.getById(id);
+    if (result.isFailure) {
+      return Result.fail(result.error ?? "");
+    }
+    const dto = this.mapper.toDTO(result.getValue());
+    return dto;
+  }
   async create(dto) {
     const entity = this.mapper.toEntity(dto);
     if (entity.isFailure) {
       return Result.fail(entity.error ?? "");
     }
     const result = await this.service.create(entity.getValue());
+    if (result.isFailure) {
+      return Result.fail(result.error ?? "");
+    }
+    const obj = this.mapper.toDTO(result.getValue());
+    if (obj.isFailure) {
+      return Result.fail(obj.error ?? "");
+    }
+    return Result.ok(obj.getValue());
+  }
+  async delete(id) {
+    const result = await this.service.delete(id);
+    if (result.isFailure) {
+      return Result.fail(result.error ?? "");
+    }
+    return this.mapper.toDTO(result.getValue());
+  }
+  async update(dto) {
+    const entity = this.mapper.toEntity(dto);
+    if (entity.isFailure) {
+      return Result.fail(entity.error ?? "");
+    }
+    const result = await this.service.update(entity.getValue());
     if (result.isFailure) {
       return Result.fail(result.error ?? "");
     }

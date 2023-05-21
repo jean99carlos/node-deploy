@@ -208,7 +208,7 @@ var AnoRepositorio = class {
         id: param.id
       }
     });
-    return Result.ok();
+    return Result.ok(param);
   }
   async getById(id) {
     const anoDTO = await this.prisma.ano.findUnique({
