@@ -7,10 +7,6 @@ var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -27,18 +23,10 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __publicField = (obj, key, value) => {
   __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
   return value;
 };
-
-// src/infrastructure/crosscutting/adapter/mappers/aplication/AnoAppMapper.ts
-var AnoAppMapper_exports = {};
-__export(AnoAppMapper_exports, {
-  AnoAppMapper: () => AnoAppMapper
-});
-module.exports = __toCommonJS(AnoAppMapper_exports);
 
 // src/core/domain/Entity.ts
 var import_crypto = __toESM(require("crypto"));
@@ -115,32 +103,12 @@ var Ano = class extends Entity {
 };
 __name(Ano, "Ano");
 
-// src/infrastructure/crosscutting/adapter/mappers/aplication/AnoAppMapper.ts
-var _AnoAppMapper = class {
-  constructor() {
-  }
-  static getInstance() {
-    if (!_AnoAppMapper.instance) {
-      _AnoAppMapper.instance = new _AnoAppMapper();
-    }
-    return _AnoAppMapper.instance;
-  }
-  toEntity(raw) {
-    return Ano.create({
-      descricao: raw.descricao
-    }, raw.id);
-  }
-  toDTO(ano) {
-    return Result.ok({
-      id: ano.id,
-      descricao: ano.props.descricao
+// src/domain/ano/entities/Ano.spec.ts
+it("deve ter ano numerico", () => {
+  const descricao = "2023a";
+  expect(() => {
+    Ano.create({
+      descricao
     });
-  }
-};
-var AnoAppMapper = _AnoAppMapper;
-__name(AnoAppMapper, "AnoAppMapper");
-__publicField(AnoAppMapper, "instance");
-// Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
-  AnoAppMapper
+  }).toThrow();
 });

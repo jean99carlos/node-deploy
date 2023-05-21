@@ -1,5 +1,6 @@
 import { Ano } from "../../../../../domain/ano/entities/Ano";
 import { AnoDTO } from "../../../../../aplication/dto/AnoDTO";
+import { Result } from "../../../../../core/domain/Result";
 
 export class AnoAppMapper {
   private static instance: AnoAppMapper;
@@ -12,14 +13,14 @@ export class AnoAppMapper {
     }
     return AnoAppMapper.instance;
   }
-  toEntity(raw: AnoDTO): Ano {
-    return Ano.create({ descricao: raw.descricao }, raw.id ?? undefined);
+  toEntity(raw: AnoDTO): Result<Ano> {
+    return Ano.create({ descricao: raw.descricao }, raw.id);
   }
 
-  toDTO(ano: Ano): AnoDTO {
-    return {
+  toDTO(ano: Ano): Result<AnoDTO> {
+    return Result.ok({
       id: ano.id,
       descricao: ano.props.descricao,
-    };
+    });
   }
 }

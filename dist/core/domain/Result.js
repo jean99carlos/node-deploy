@@ -1,9 +1,7 @@
 "use strict";
-var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
@@ -19,40 +17,18 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __publicField = (obj, key, value) => {
   __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
   return value;
 };
 
-// src/infrastructure/crosscutting/adapter/mappers/aplication/AnoAppMapper.ts
-var AnoAppMapper_exports = {};
-__export(AnoAppMapper_exports, {
-  AnoAppMapper: () => AnoAppMapper
-});
-module.exports = __toCommonJS(AnoAppMapper_exports);
-
-// src/core/domain/Entity.ts
-var import_crypto = __toESM(require("crypto"));
-var Entity = class {
-  constructor(props, id) {
-    __publicField(this, "id");
-    __publicField(this, "props");
-    this.props = props;
-    this.id = id ?? import_crypto.default.randomUUID();
-  }
-};
-__name(Entity, "Entity");
-
 // src/core/domain/Result.ts
+var Result_exports = {};
+__export(Result_exports, {
+  Result: () => Result
+});
+module.exports = __toCommonJS(Result_exports);
 var Result = class {
   constructor(isSuccess, error, value) {
     __publicField(this, "isSuccess");
@@ -94,53 +70,7 @@ var Result = class {
   }
 };
 __name(Result, "Result");
-
-// src/domain/ano/entities/Ano.ts
-var Ano = class extends Entity {
-  constructor(props, id) {
-    super(props, id);
-  }
-  static create(props, id) {
-    try {
-      Number.parseInt(props.descricao);
-    } catch (ex) {
-      return Result.fail("Descri\xE7\xE3o deve ser n\xFAmero");
-    }
-    if (props.descricao.length != 4) {
-      return Result.fail("Ano deve ter 4 d\xEDgitos");
-    }
-    const ano = new Ano(props, id);
-    return Result.ok(ano);
-  }
-};
-__name(Ano, "Ano");
-
-// src/infrastructure/crosscutting/adapter/mappers/aplication/AnoAppMapper.ts
-var _AnoAppMapper = class {
-  constructor() {
-  }
-  static getInstance() {
-    if (!_AnoAppMapper.instance) {
-      _AnoAppMapper.instance = new _AnoAppMapper();
-    }
-    return _AnoAppMapper.instance;
-  }
-  toEntity(raw) {
-    return Ano.create({
-      descricao: raw.descricao
-    }, raw.id);
-  }
-  toDTO(ano) {
-    return Result.ok({
-      id: ano.id,
-      descricao: ano.props.descricao
-    });
-  }
-};
-var AnoAppMapper = _AnoAppMapper;
-__name(AnoAppMapper, "AnoAppMapper");
-__publicField(AnoAppMapper, "instance");
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  AnoAppMapper
+  Result
 });

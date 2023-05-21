@@ -37,17 +37,17 @@ var AnoService = class {
   get() {
     return this.repo.get();
   }
-  getById() {
-    throw new Error("Method not implemented.");
+  getById(id) {
+    return this.repo.getById(id);
   }
   create(param) {
-    throw new Error("Method not implemented.");
+    return this.repo.create(param);
   }
   update(param) {
-    throw new Error("Method not implemented.");
+    return this.repo.update(param);
   }
   delete(param) {
-    throw new Error("Method not implemented.");
+    return this.repo.delete(param);
   }
 };
 __name(AnoService, "AnoService");

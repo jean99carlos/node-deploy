@@ -23,28 +23,28 @@ var __publicField = (obj, key, value) => {
   return value;
 };
 
-// src/presentation/controllers/ano/AnoController.ts
-var AnoController_exports = {};
-__export(AnoController_exports, {
-  default: () => AnoController
+// src/presentation/router/RouteAno.ts
+var RouteAno_exports = {};
+__export(RouteAno_exports, {
+  RouteAno: () => RouteAno
 });
-module.exports = __toCommonJS(AnoController_exports);
-var import_zod = require("zod");
-var createAnoSchema = import_zod.z.object({
-  descricao: import_zod.z.string()
-});
-var AnoController = class {
-  constructor(service) {
-    __publicField(this, "service");
-    this.service = service;
+module.exports = __toCommonJS(RouteAno_exports);
+var RouteAno = class {
+  constructor(controller) {
+    __publicField(this, "controller");
+    this.controller = controller;
   }
-  async create(request, reply) {
-    const anoDTO = createAnoSchema.parse(request.body);
-    const created = await this.service.create(anoDTO);
-    return reply.status(201).send(created);
-  }
-  async get(request) {
-    return await this.service.get();
+  registerRoutes(app) {
+    app.post("/ano", (request, reply) => {
+      this.controller.create(request, reply);
+    });
+    app.get("/ano", async (request) => {
+      return await this.controller.get(request);
+    });
   }
 };
-__name(AnoController, "AnoController");
+__name(RouteAno, "RouteAno");
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  RouteAno
+});

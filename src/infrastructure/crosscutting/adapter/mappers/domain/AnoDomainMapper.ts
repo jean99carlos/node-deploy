@@ -1,6 +1,7 @@
 import { Ano as AnoDomain } from "../../../../../domain/ano/entities/Ano";
 import { Ano as AnoDTO } from "@prisma/client";
 import { IAnoDomainMapper } from "../../../../../domain/ano/interfaces/mapper-prisma/IAnoDomainMapper";
+import { Result } from "../../../../../core/domain/Result";
 
 export class AnoDomainMapper implements IAnoDomainMapper {
   private static instance: AnoDomainMapper;
@@ -13,13 +14,22 @@ export class AnoDomainMapper implements IAnoDomainMapper {
     }
     return AnoDomainMapper.instance;
   }
-  toDomain(raw: AnoDTO): AnoDomain {
-    return AnoDomain.create({ descricao: raw.descricao }, raw.id ?? undefined);
+  toDomain(raw: AnoDTO): Result<AnoDomain> {
+    const result = AnoDomain.create(
+      { descricao: raw.descricao },
+      raw.id ?? undefined
+    );
+    return result;
   }
-  toPersistence(ano: AnoDomain): AnoDTO {
-    return {
-      id: ano.id,
-      descricao: ano.props.descricao,
-    };
+  toPersistence(ano: AnoDomain): Result<AnoDTO> {
+    try {
+      return Result.ok({
+        id: ano.id,
+        descricao: ano.props.descricao,
+      });
+    } catch (error) {
+      console.log(error);
+      return Result.fail("Fail to parse to persistence format");
+    }
   }
 }
