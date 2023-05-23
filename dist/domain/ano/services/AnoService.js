@@ -73,8 +73,8 @@ var Result = class {
 };
 __name(Result, "Result");
 
-// src/domain/ano/services/AnoService.ts
-var AnoService = class {
+// src/core/services/ServiceBase.ts
+var ServiceBase = class {
   constructor(repo) {
     __publicField(this, "repo");
     this.repo = repo;
@@ -97,6 +97,14 @@ var AnoService = class {
       return Result.fail(register.error ?? "");
     }
     return this.repo.delete(register.getValue());
+  }
+};
+__name(ServiceBase, "ServiceBase");
+
+// src/domain/ano/services/AnoService.ts
+var AnoService = class extends ServiceBase {
+  constructor(repo) {
+    super(repo);
   }
 };
 __name(AnoService, "AnoService");

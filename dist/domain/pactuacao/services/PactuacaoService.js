@@ -73,8 +73,8 @@ var Result = class {
 };
 __name(Result, "Result");
 
-// src/domain/pactuacao/services/PactuacaoService.ts
-var PactuacaoService = class {
+// src/core/services/ServiceBase.ts
+var ServiceBase = class {
   constructor(repo) {
     __publicField(this, "repo");
     this.repo = repo;
@@ -97,6 +97,14 @@ var PactuacaoService = class {
       return Result.fail(register.error ?? "");
     }
     return this.repo.delete(register.getValue());
+  }
+};
+__name(ServiceBase, "ServiceBase");
+
+// src/domain/pactuacao/services/PactuacaoService.ts
+var PactuacaoService = class extends ServiceBase {
+  constructor(repo) {
+    super(repo);
   }
 };
 __name(PactuacaoService, "PactuacaoService");

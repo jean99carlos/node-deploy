@@ -1,5 +1,8 @@
 import crypto from "crypto"
-export class Entity<T> {
+export interface WithId{
+   id: string;
+}
+export class Entity<T> implements WithId{
   public id: string;
   public props: T;
   constructor(props: T, id?: string) {

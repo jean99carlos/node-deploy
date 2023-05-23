@@ -1,15 +1,13 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { z } from "zod";
-import { IPactuacaoAppService } from "../../interfaces/IPactuacaoAppService";
-import { IPactuacaoController } from "../../router/interfaces/pactuacao/IPactuacaoController";
-const createParamsSchema = z.object({
+import { IPactuacaoAppService } from "./interfaces/IPactuacaoAppService";
+import { IPactuacaoController } from "../../router/pactuacao/interfaces/IPactuacaoController";
+import { PactuacaoDTO } from "../../../aplication/services/pactuacao/dtos/PactuacaoDTO";
+
+const paramsSchema = z.object({
   id: z.string(),
 });
-const createPactuacaoSchema = z.object({
-  id: z.string().optional(),
-  descricao: z.string(),
-  programa: z.string(),
-});
+
 export default class PactuacaoController implements IPactuacaoController {
   constructor(private service: IPactuacaoAppService) {}
 
@@ -17,7 +15,7 @@ export default class PactuacaoController implements IPactuacaoController {
     request: FastifyRequest,
     reply: FastifyReply
   ): Promise<FastifyReply> {
-    const dto = createPactuacaoSchema.parse(request.body);
+    const dto = new PactuacaoDTO(request.body);
     const created = await this.service.create(dto);
     return reply.status(201).send(created);
   }
@@ -26,14 +24,14 @@ export default class PactuacaoController implements IPactuacaoController {
     return await this.service.get();
   }
   async getById(request: FastifyRequest): Promise<any> {
-    const param = createParamsSchema.parse(request.params);
+    const param = paramsSchema.parse(request.params);
     return await this.service.getById(param.id);
   }
   async delete(
     request: FastifyRequest,
     reply: FastifyReply
   ): Promise<FastifyReply> {
-    const param = createParamsSchema.parse(request.params);
+    const param = paramsSchema.parse(request.params);
     if (param.id == undefined) {
       return reply.status(500).send("Not found");
     }
@@ -47,8 +45,8 @@ export default class PactuacaoController implements IPactuacaoController {
     request: FastifyRequest,
     reply: FastifyReply
   ): Promise<FastifyReply> {
-    const param = createParamsSchema.parse(request.params);
-    const anoDTO = createPactuacaoSchema.parse(request.body);
+    const param = paramsSchema.parse(request.params);
+    const anoDTO = new PactuacaoDTO(request.body);
     anoDTO.id = param.id;
     const created = await this.service.update(anoDTO);
     return reply.status(201).send(created);

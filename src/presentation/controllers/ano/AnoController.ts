@@ -1,14 +1,12 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { IAnoController } from "../../router/interfaces/ano/IAnoController";
-import { IAnoAppService } from "../../interfaces/IAnoAppService";
+import { IAnoController } from "../../router/ano/interfaces/IAnoController";
+import { IAnoAppService } from "./interfaces/IAnoAppService";
 import { z } from "zod";
-const createParamsSchema = z.object({
+import { AnoDTO } from "../../../aplication/services/ano/dtos/AnoDTO";
+const paramsSchema = z.object({
   id: z.string(),
 });
-const createAnoSchema = z.object({
-  id: z.string().optional(),
-  descricao: z.string(),
-});
+
 export default class AnoController implements IAnoController {
   constructor(private service: IAnoAppService) {}
 
@@ -16,7 +14,7 @@ export default class AnoController implements IAnoController {
     request: FastifyRequest,
     reply: FastifyReply
   ): Promise<FastifyReply> {
-    const anoDTO = createAnoSchema.parse(request.body);
+    const anoDTO = new AnoDTO(request.body);
     const created = await this.service.create(anoDTO);
     return reply.status(201).send(created);
   }
@@ -25,14 +23,14 @@ export default class AnoController implements IAnoController {
     return await this.service.get();
   }
   async getById(request: FastifyRequest): Promise<any> {
-    const param = createParamsSchema.parse(request.params);
+    const param = paramsSchema.parse(request.params);
     return await this.service.getById(param.id);
   }
   async delete(
     request: FastifyRequest,
     reply: FastifyReply
   ): Promise<FastifyReply> {
-    const param = createParamsSchema.parse(request.params);
+    const param = paramsSchema.parse(request.params);
     if (param.id == undefined) {
       return reply.status(500).send("Not found");
     }
@@ -46,9 +44,9 @@ export default class AnoController implements IAnoController {
     request: FastifyRequest,
     reply: FastifyReply
   ): Promise<FastifyReply> {
-    const param = createParamsSchema.parse(request.params);
-    const anoDTO = createAnoSchema.parse(request.body);
-    anoDTO.id=param.id;
+    const param = paramsSchema.parse(request.params);
+    const anoDTO = new AnoDTO(request.body);
+    anoDTO.id = param.id;
     const created = await this.service.update(anoDTO);
     return reply.status(201).send(created);
   }

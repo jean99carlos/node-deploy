@@ -2,12 +2,12 @@ import { FastifyInstance } from "fastify";
 import { AnoRepositorio } from "../../data/repository/ano/AnoRepositorio";
 import { AnoService } from "../../../domain/ano/services/AnoService";
 import AnoController from "../../../presentation/controllers/ano/AnoController";
-import { AnoAppService } from "../../../aplication/services/ano/AnoAppService";
-import { RouteAno } from "../../../presentation/router/routes/ano/RouteAno";
+import { AnoAppService } from "../../../aplication/services/ano/usecases/AnoAppService";
+import { RouteAno } from "../../../presentation/router/ano/RouteAno";
 import { PactuacaoRepositorio } from "../../data/repository/pactuacao/PactuacaoRepositorio";
 import { PactuacaoService } from "../../../domain/pactuacao/services/PactuacaoService";
 import { PactuacaoAppService } from "../../../aplication/services/pactuacao/PactuacaoAppService";
-import { RoutePactuacao } from "../../../presentation/router/routes/pactuacao/RoutePactuacao";
+import { RoutePactuacao } from "../../../presentation/router/pactuacao/RoutePactuacao";
 import PactuacaoController from "../../../presentation/controllers/pactuacao/PactuacaoController";
 
 export class IOC {

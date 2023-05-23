@@ -110,33 +110,46 @@ var Pactuacao = class extends Entity {
 };
 __name(Pactuacao, "Pactuacao");
 
-// src/infrastructure/crosscutting/adapter/mappers/aplication/PactuacaoAppMapper.ts
-var _PactuacaoAppMapper = class {
+// src/infrastructure/crosscutting/adapter/mappers/PactuacaoMapper.ts
+var _PactuacaoMapper = class {
   constructor() {
   }
   static getInstance() {
-    if (!_PactuacaoAppMapper.instance) {
-      _PactuacaoAppMapper.instance = new _PactuacaoAppMapper();
+    if (!_PactuacaoMapper.instance) {
+      _PactuacaoMapper.instance = new _PactuacaoMapper();
     }
-    return _PactuacaoAppMapper.instance;
+    return _PactuacaoMapper.instance;
   }
-  toEntity(raw) {
-    return Pactuacao.create({
+  toDomain(raw) {
+    const result = Pactuacao.create({
       descricao: raw.descricao,
       programa: raw.programa
-    }, raw.id);
+    }, raw.id ?? void 0);
+    return result;
   }
-  toDTO(dto) {
+  toPersistence(object) {
+    try {
+      return Result.ok({
+        id: object.id,
+        descricao: object.props.descricao,
+        programa: object.props.programa
+      });
+    } catch (error) {
+      console.log(error);
+      return Result.fail("Fail to parse to persistence format");
+    }
+  }
+  toDTO(object) {
     return Result.ok({
-      id: dto.id,
-      descricao: dto.props.descricao,
-      programa: dto.props.programa
+      id: object.id,
+      descricao: object.props.descricao,
+      programa: object.props.programa
     });
   }
 };
-var PactuacaoAppMapper = _PactuacaoAppMapper;
-__name(PactuacaoAppMapper, "PactuacaoAppMapper");
-__publicField(PactuacaoAppMapper, "instance");
+var PactuacaoMapper = _PactuacaoMapper;
+__name(PactuacaoMapper, "PactuacaoMapper");
+__publicField(PactuacaoMapper, "instance");
 
 // src/aplication/services/pactuacao/PactuacaoAppService.ts
 var PactuacaoAppService = class {
@@ -144,7 +157,7 @@ var PactuacaoAppService = class {
     __publicField(this, "service");
     __publicField(this, "mapper");
     this.service = service;
-    this.mapper = PactuacaoAppMapper.getInstance();
+    this.mapper = PactuacaoMapper.getInstance();
   }
   async get() {
     const results = await this.service.get();
@@ -170,7 +183,7 @@ var PactuacaoAppService = class {
     return dto;
   }
   async create(dto) {
-    const entity = this.mapper.toEntity(dto);
+    const entity = this.mapper.toDomain(dto);
     if (entity.isFailure) {
       return Result.fail(entity.error ?? "");
     }
@@ -192,7 +205,7 @@ var PactuacaoAppService = class {
     return this.mapper.toDTO(result.getValue());
   }
   async update(dto) {
-    const entity = this.mapper.toEntity(dto);
+    const entity = this.mapper.toDomain(dto);
     if (entity.isFailure) {
       return Result.fail(entity.error ?? "");
     }

@@ -131,15 +131,15 @@ var Ano = class extends Entity {
 };
 __name(Ano, "Ano");
 
-// src/infrastructure/crosscutting/adapter/mappers/domain/AnoDomainMapper.ts
-var _AnoDomainMapper = class {
+// src/infrastructure/crosscutting/adapter/mappers/AnoMapper.ts
+var _AnoMapper = class {
   constructor() {
   }
   static getInstance() {
-    if (!_AnoDomainMapper.instance) {
-      _AnoDomainMapper.instance = new _AnoDomainMapper();
+    if (!_AnoMapper.instance) {
+      _AnoMapper.instance = new _AnoMapper();
     }
-    return _AnoDomainMapper.instance;
+    return _AnoMapper.instance;
   }
   toDomain(raw) {
     const result = Ano.create({
@@ -158,52 +158,57 @@ var _AnoDomainMapper = class {
       return Result.fail("Fail to parse to persistence format");
     }
   }
+  toDTO(ano) {
+    return Result.ok({
+      id: ano.id,
+      descricao: ano.props.descricao
+    });
+  }
 };
-var AnoDomainMapper = _AnoDomainMapper;
-__name(AnoDomainMapper, "AnoDomainMapper");
-__publicField(AnoDomainMapper, "instance");
+var AnoMapper = _AnoMapper;
+__name(AnoMapper, "AnoMapper");
+__publicField(AnoMapper, "instance");
 
-// src/infrastructure/data/repository/ano/AnoRepositorio.ts
-var AnoRepositorio = class {
-  constructor() {
-    __publicField(this, "prisma");
+// src/core/repository/RepositorioBase.ts
+var RepositorioBase = class {
+  constructor(mapper, model) {
     __publicField(this, "mapper");
-    this.prisma = PrismaContext.getInstance();
-    this.mapper = AnoDomainMapper.getInstance();
+    __publicField(this, "model");
+    this.mapper = mapper;
+    this.model = model;
   }
   async get() {
-    const anosDTO = await this.prisma.ano.findMany();
-    const anos = anosDTO.map((anoDTO) => this.mapper.toDomain(anoDTO));
-    if (anos.some((x) => x.isFailure))
+    const resultsDTO = await this.model.findMany();
+    const resultsDomain = resultsDTO.map((dto) => this.mapper.toDomain(dto));
+    if (resultsDomain.some((x) => x.isFailure))
       return Result.fail("Fail to parse some");
     else
-      return Result.ok(anos.map((x) => x.getValue()));
+      return Result.ok(resultsDomain.map((x) => x.getValue()));
   }
   async create(param) {
-    console.log(param);
-    const anoDTO = this.mapper.toPersistence(param);
-    if (anoDTO.isFailure) {
-      return Result.fail(anoDTO.error ?? "");
+    const parsedDTO = this.mapper.toPersistence(param);
+    if (parsedDTO.isFailure) {
+      return Result.fail(parsedDTO.error ?? "");
     }
-    const createdAnoDTO = await this.prisma.ano.create({
-      data: anoDTO.getValue()
+    const createdDTO = await this.model.create({
+      data: parsedDTO.getValue()
     });
-    const createdAno = this.mapper.toDomain(createdAnoDTO);
-    return createdAno;
+    const createdDomain = this.mapper.toDomain(createdDTO);
+    return createdDomain;
   }
   async update(param) {
-    const anoDTO = this.mapper.toPersistence(param);
-    const updatedAnoDTO = await this.prisma.ano.update({
+    const parsedDTO = this.mapper.toPersistence(param);
+    const updatedDTO = await this.model.update({
       where: {
         id: param.id
       },
-      data: anoDTO.getValue()
+      data: parsedDTO.getValue()
     });
-    const updatedAno = this.mapper.toDomain(updatedAnoDTO);
-    return updatedAno;
+    const updatedDomain = this.mapper.toDomain(updatedDTO);
+    return updatedDomain;
   }
   async delete(param) {
-    const result = await this.prisma.ano.delete({
+    const result = await this.model.delete({
       where: {
         id: param.id
       }
@@ -211,16 +216,26 @@ var AnoRepositorio = class {
     return Result.ok(param);
   }
   async getById(id) {
-    const anoDTO = await this.prisma.ano.findUnique({
+    const parsedDTO = await this.model.findUnique({
       where: {
         id
       }
     });
-    if (anoDTO == null) {
-      return Result.fail("N\xE3o encontrado");
+    if (parsedDTO == null) {
+      return Result.fail("Not found");
     } else {
-      return this.mapper.toDomain(anoDTO);
+      return this.mapper.toDomain(parsedDTO);
     }
+  }
+};
+__name(RepositorioBase, "RepositorioBase");
+
+// src/infrastructure/data/repository/ano/AnoRepositorio.ts
+var AnoRepositorio = class extends RepositorioBase {
+  constructor() {
+    const { ano } = PrismaContext.getInstance();
+    const mapper = AnoMapper.getInstance();
+    super(mapper, ano);
   }
 };
 __name(AnoRepositorio, "AnoRepositorio");

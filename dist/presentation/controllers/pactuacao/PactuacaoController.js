@@ -29,14 +29,32 @@ __export(PactuacaoController_exports, {
   default: () => PactuacaoController
 });
 module.exports = __toCommonJS(PactuacaoController_exports);
+var import_zod2 = require("zod");
+
+// src/aplication/services/pactuacao/dtos/PactuacaoDTO.ts
 var import_zod = require("zod");
-var createParamsSchema = import_zod.z.object({
-  id: import_zod.z.string()
-});
-var createPactuacaoSchema = import_zod.z.object({
+var _PactuacaoDTO = class {
+  constructor(data) {
+    __publicField(this, "id");
+    __publicField(this, "descricao");
+    __publicField(this, "programa");
+    const validateData = _PactuacaoDTO.schema.parse(data);
+    this.id = validateData.id;
+    this.programa = validateData.programa;
+    this.descricao = validateData.descricao;
+  }
+};
+var PactuacaoDTO = _PactuacaoDTO;
+__name(PactuacaoDTO, "PactuacaoDTO");
+__publicField(PactuacaoDTO, "schema", import_zod.z.object({
   id: import_zod.z.string().optional(),
   descricao: import_zod.z.string(),
   programa: import_zod.z.string()
+}));
+
+// src/presentation/controllers/pactuacao/PactuacaoController.ts
+var paramsSchema = import_zod2.z.object({
+  id: import_zod2.z.string()
 });
 var PactuacaoController = class {
   constructor(service) {
@@ -44,7 +62,7 @@ var PactuacaoController = class {
     this.service = service;
   }
   async create(request, reply) {
-    const dto = createPactuacaoSchema.parse(request.body);
+    const dto = new PactuacaoDTO(request.body);
     const created = await this.service.create(dto);
     return reply.status(201).send(created);
   }
@@ -52,11 +70,11 @@ var PactuacaoController = class {
     return await this.service.get();
   }
   async getById(request) {
-    const param = createParamsSchema.parse(request.params);
+    const param = paramsSchema.parse(request.params);
     return await this.service.getById(param.id);
   }
   async delete(request, reply) {
-    const param = createParamsSchema.parse(request.params);
+    const param = paramsSchema.parse(request.params);
     if (param.id == void 0) {
       return reply.status(500).send("Not found");
     }
@@ -67,8 +85,8 @@ var PactuacaoController = class {
     return reply.status(201).send(result);
   }
   async update(request, reply) {
-    const param = createParamsSchema.parse(request.params);
-    const anoDTO = createPactuacaoSchema.parse(request.body);
+    const param = paramsSchema.parse(request.params);
+    const anoDTO = new PactuacaoDTO(request.body);
     anoDTO.id = param.id;
     const created = await this.service.update(anoDTO);
     return reply.status(201).send(created);

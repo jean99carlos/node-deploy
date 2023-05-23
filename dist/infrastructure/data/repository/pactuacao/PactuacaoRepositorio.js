@@ -56,6 +56,18 @@ var PrismaContext = _PrismaContext;
 __name(PrismaContext, "PrismaContext");
 __publicField(PrismaContext, "context");
 
+// src/core/domain/Entity.ts
+var import_crypto = __toESM(require("crypto"));
+var Entity = class {
+  constructor(props, id) {
+    __publicField(this, "id");
+    __publicField(this, "props");
+    this.props = props;
+    this.id = id ?? import_crypto.default.randomUUID();
+  }
+};
+__name(Entity, "Entity");
+
 // src/core/domain/Result.ts
 var Result = class {
   constructor(isSuccess, error, value) {
@@ -99,18 +111,6 @@ var Result = class {
 };
 __name(Result, "Result");
 
-// src/core/domain/Entity.ts
-var import_crypto = __toESM(require("crypto"));
-var Entity = class {
-  constructor(props, id) {
-    __publicField(this, "id");
-    __publicField(this, "props");
-    this.props = props;
-    this.id = id ?? import_crypto.default.randomUUID();
-  }
-};
-__name(Entity, "Entity");
-
 // src/domain/pactuacao/entities/Pactuacao.ts
 var Pactuacao = class extends Entity {
   constructor(props, id) {
@@ -126,15 +126,15 @@ var Pactuacao = class extends Entity {
 };
 __name(Pactuacao, "Pactuacao");
 
-// src/infrastructure/crosscutting/adapter/mappers/domain/PactuacaoDomainMapper.ts
-var _PactuacaoDomainMapper = class {
+// src/infrastructure/crosscutting/adapter/mappers/PactuacaoMapper.ts
+var _PactuacaoMapper = class {
   constructor() {
   }
   static getInstance() {
-    if (!_PactuacaoDomainMapper.instance) {
-      _PactuacaoDomainMapper.instance = new _PactuacaoDomainMapper();
+    if (!_PactuacaoMapper.instance) {
+      _PactuacaoMapper.instance = new _PactuacaoMapper();
     }
-    return _PactuacaoDomainMapper.instance;
+    return _PactuacaoMapper.instance;
   }
   toDomain(raw) {
     const result = Pactuacao.create({
@@ -155,52 +155,58 @@ var _PactuacaoDomainMapper = class {
       return Result.fail("Fail to parse to persistence format");
     }
   }
+  toDTO(object) {
+    return Result.ok({
+      id: object.id,
+      descricao: object.props.descricao,
+      programa: object.props.programa
+    });
+  }
 };
-var PactuacaoDomainMapper = _PactuacaoDomainMapper;
-__name(PactuacaoDomainMapper, "PactuacaoDomainMapper");
-__publicField(PactuacaoDomainMapper, "instance");
+var PactuacaoMapper = _PactuacaoMapper;
+__name(PactuacaoMapper, "PactuacaoMapper");
+__publicField(PactuacaoMapper, "instance");
 
-// src/infrastructure/data/repository/pactuacao/PactuacaoRepositorio.ts
-var PactuacaoRepositorio = class {
-  constructor() {
-    __publicField(this, "prisma");
+// src/core/repository/RepositorioBase.ts
+var RepositorioBase = class {
+  constructor(mapper, model) {
     __publicField(this, "mapper");
-    this.prisma = PrismaContext.getInstance();
-    this.mapper = PactuacaoDomainMapper.getInstance();
+    __publicField(this, "model");
+    this.mapper = mapper;
+    this.model = model;
   }
   async get() {
-    const registersDTO = await this.prisma.pactuacao.findMany();
-    const registers = registersDTO.map((register) => this.mapper.toDomain(register));
-    if (registers.some((x) => x.isFailure)) {
+    const resultsDTO = await this.model.findMany();
+    const resultsDomain = resultsDTO.map((dto) => this.mapper.toDomain(dto));
+    if (resultsDomain.some((x) => x.isFailure))
       return Result.fail("Fail to parse some");
-    } else {
-      return Result.ok(registers.map((x) => x.getValue()));
-    }
+    else
+      return Result.ok(resultsDomain.map((x) => x.getValue()));
   }
   async create(param) {
-    const dto = this.mapper.toPersistence(param);
-    if (dto.isFailure) {
-      return Result.fail(dto.error ?? "");
+    const parsedDTO = this.mapper.toPersistence(param);
+    if (parsedDTO.isFailure) {
+      return Result.fail(parsedDTO.error ?? "");
     }
-    const createdDTO = await this.prisma.pactuacao.create({
-      data: dto.getValue()
+    const createdDTO = await this.model.create({
+      data: parsedDTO.getValue()
     });
-    const created = this.mapper.toDomain(createdDTO);
-    return created;
+    const createdDomain = this.mapper.toDomain(createdDTO);
+    return createdDomain;
   }
   async update(param) {
-    const dto = this.mapper.toPersistence(param);
-    const updatedDTO = await this.prisma.pactuacao.update({
+    const parsedDTO = this.mapper.toPersistence(param);
+    const updatedDTO = await this.model.update({
       where: {
         id: param.id
       },
-      data: dto.getValue()
+      data: parsedDTO.getValue()
     });
-    const updated = this.mapper.toDomain(updatedDTO);
-    return updated;
+    const updatedDomain = this.mapper.toDomain(updatedDTO);
+    return updatedDomain;
   }
   async delete(param) {
-    const result = await this.prisma.pactuacao.delete({
+    const result = await this.model.delete({
       where: {
         id: param.id
       }
@@ -208,16 +214,26 @@ var PactuacaoRepositorio = class {
     return Result.ok(param);
   }
   async getById(id) {
-    const dto = await this.prisma.pactuacao.findUnique({
+    const parsedDTO = await this.model.findUnique({
       where: {
         id
       }
     });
-    if (dto == null) {
+    if (parsedDTO == null) {
       return Result.fail("Not found");
     } else {
-      return this.mapper.toDomain(dto);
+      return this.mapper.toDomain(parsedDTO);
     }
+  }
+};
+__name(RepositorioBase, "RepositorioBase");
+
+// src/infrastructure/data/repository/pactuacao/PactuacaoRepositorio.ts
+var PactuacaoRepositorio = class extends RepositorioBase {
+  constructor() {
+    const { pactuacao } = PrismaContext.getInstance();
+    const mapper = PactuacaoMapper.getInstance();
+    super(mapper, pactuacao);
   }
 };
 __name(PactuacaoRepositorio, "PactuacaoRepositorio");

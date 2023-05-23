@@ -1,13 +1,13 @@
 import { Result } from "../../../core/domain/Result";
-import { PactuacaoAppMapper } from "../../../infrastructure/crosscutting/adapter/mappers/aplication/PactuacaoAppMapper";
-import { IPactuacaoAppService } from "../../../presentation/interfaces/IPactuacaoAppService";
-import { PactuacaoDTO } from "../../dto/PactuacaoDTO";
-import { IPactuacaoService } from "../../interfaces/services/pactuacao/IPactuacaoService";
+import { PactuacaoMapper } from "../../../infrastructure/crosscutting/adapter/mappers/PactuacaoMapper";
+import { IPactuacaoAppService } from "../../../presentation/controllers/pactuacao/interfaces/IPactuacaoAppService";
+import { PactuacaoDTO } from "./dtos/PactuacaoDTO";
+import { IPactuacaoService } from "./interfaces/services/IPactuacaoService";
 
 export class PactuacaoAppService implements IPactuacaoAppService {
-  mapper: PactuacaoAppMapper;
+  mapper: PactuacaoMapper;
   constructor(private service: IPactuacaoService) {
-    this.mapper = PactuacaoAppMapper.getInstance();
+    this.mapper = PactuacaoMapper.getInstance();
   }
 
   async get(): Promise<Result<PactuacaoDTO[]>> {
@@ -35,7 +35,7 @@ export class PactuacaoAppService implements IPactuacaoAppService {
   }
 
   async create(dto: PactuacaoDTO): Promise<Result<PactuacaoDTO>> {
-    const entity = this.mapper.toEntity(dto);
+    const entity = this.mapper.toDomain(dto);
     if (entity.isFailure) {
       return Result.fail(entity.error ?? "");
     }
@@ -57,7 +57,7 @@ export class PactuacaoAppService implements IPactuacaoAppService {
     return this.mapper.toDTO(result.getValue());
   }
   async update(dto: PactuacaoDTO): Promise<Result<PactuacaoDTO>> {
-    const entity = this.mapper.toEntity(dto);
+    const entity = this.mapper.toDomain(dto);
     if (entity.isFailure) {
       return Result.fail(entity.error ?? "");
     }

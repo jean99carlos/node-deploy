@@ -131,15 +131,15 @@ var Ano = class extends Entity {
 };
 __name(Ano, "Ano");
 
-// src/infrastructure/crosscutting/adapter/mappers/domain/AnoDomainMapper.ts
-var _AnoDomainMapper = class {
+// src/infrastructure/crosscutting/adapter/mappers/AnoMapper.ts
+var _AnoMapper = class {
   constructor() {
   }
   static getInstance() {
-    if (!_AnoDomainMapper.instance) {
-      _AnoDomainMapper.instance = new _AnoDomainMapper();
+    if (!_AnoMapper.instance) {
+      _AnoMapper.instance = new _AnoMapper();
     }
-    return _AnoDomainMapper.instance;
+    return _AnoMapper.instance;
   }
   toDomain(raw) {
     const result = Ano.create({
@@ -158,52 +158,57 @@ var _AnoDomainMapper = class {
       return Result.fail("Fail to parse to persistence format");
     }
   }
+  toDTO(ano) {
+    return Result.ok({
+      id: ano.id,
+      descricao: ano.props.descricao
+    });
+  }
 };
-var AnoDomainMapper = _AnoDomainMapper;
-__name(AnoDomainMapper, "AnoDomainMapper");
-__publicField(AnoDomainMapper, "instance");
+var AnoMapper = _AnoMapper;
+__name(AnoMapper, "AnoMapper");
+__publicField(AnoMapper, "instance");
 
-// src/infrastructure/data/repository/ano/AnoRepositorio.ts
-var AnoRepositorio = class {
-  constructor() {
-    __publicField(this, "prisma");
+// src/core/repository/RepositorioBase.ts
+var RepositorioBase = class {
+  constructor(mapper, model) {
     __publicField(this, "mapper");
-    this.prisma = PrismaContext.getInstance();
-    this.mapper = AnoDomainMapper.getInstance();
+    __publicField(this, "model");
+    this.mapper = mapper;
+    this.model = model;
   }
   async get() {
-    const anosDTO = await this.prisma.ano.findMany();
-    const anos = anosDTO.map((anoDTO) => this.mapper.toDomain(anoDTO));
-    if (anos.some((x) => x.isFailure))
+    const resultsDTO = await this.model.findMany();
+    const resultsDomain = resultsDTO.map((dto) => this.mapper.toDomain(dto));
+    if (resultsDomain.some((x) => x.isFailure))
       return Result.fail("Fail to parse some");
     else
-      return Result.ok(anos.map((x) => x.getValue()));
+      return Result.ok(resultsDomain.map((x) => x.getValue()));
   }
   async create(param) {
-    console.log(param);
-    const anoDTO = this.mapper.toPersistence(param);
-    if (anoDTO.isFailure) {
-      return Result.fail(anoDTO.error ?? "");
+    const parsedDTO = this.mapper.toPersistence(param);
+    if (parsedDTO.isFailure) {
+      return Result.fail(parsedDTO.error ?? "");
     }
-    const createdAnoDTO = await this.prisma.ano.create({
-      data: anoDTO.getValue()
+    const createdDTO = await this.model.create({
+      data: parsedDTO.getValue()
     });
-    const createdAno = this.mapper.toDomain(createdAnoDTO);
-    return createdAno;
+    const createdDomain = this.mapper.toDomain(createdDTO);
+    return createdDomain;
   }
   async update(param) {
-    const anoDTO = this.mapper.toPersistence(param);
-    const updatedAnoDTO = await this.prisma.ano.update({
+    const parsedDTO = this.mapper.toPersistence(param);
+    const updatedDTO = await this.model.update({
       where: {
         id: param.id
       },
-      data: anoDTO.getValue()
+      data: parsedDTO.getValue()
     });
-    const updatedAno = this.mapper.toDomain(updatedAnoDTO);
-    return updatedAno;
+    const updatedDomain = this.mapper.toDomain(updatedDTO);
+    return updatedDomain;
   }
   async delete(param) {
-    const result = await this.prisma.ano.delete({
+    const result = await this.model.delete({
       where: {
         id: param.id
       }
@@ -211,22 +216,32 @@ var AnoRepositorio = class {
     return Result.ok(param);
   }
   async getById(id) {
-    const anoDTO = await this.prisma.ano.findUnique({
+    const parsedDTO = await this.model.findUnique({
       where: {
         id
       }
     });
-    if (anoDTO == null) {
-      return Result.fail("N\xE3o encontrado");
+    if (parsedDTO == null) {
+      return Result.fail("Not found");
     } else {
-      return this.mapper.toDomain(anoDTO);
+      return this.mapper.toDomain(parsedDTO);
     }
+  }
+};
+__name(RepositorioBase, "RepositorioBase");
+
+// src/infrastructure/data/repository/ano/AnoRepositorio.ts
+var AnoRepositorio = class extends RepositorioBase {
+  constructor() {
+    const { ano } = PrismaContext.getInstance();
+    const mapper = AnoMapper.getInstance();
+    super(mapper, ano);
   }
 };
 __name(AnoRepositorio, "AnoRepositorio");
 
-// src/domain/ano/services/AnoService.ts
-var AnoService = class {
+// src/core/services/ServiceBase.ts
+var ServiceBase = class {
   constructor(repo) {
     __publicField(this, "repo");
     this.repo = repo;
@@ -251,16 +266,40 @@ var AnoService = class {
     return this.repo.delete(register.getValue());
   }
 };
+__name(ServiceBase, "ServiceBase");
+
+// src/domain/ano/services/AnoService.ts
+var AnoService = class extends ServiceBase {
+  constructor(repo) {
+    super(repo);
+  }
+};
 __name(AnoService, "AnoService");
 
 // src/presentation/controllers/ano/AnoController.ts
+var import_zod2 = require("zod");
+
+// src/aplication/services/ano/dtos/AnoDTO.ts
 var import_zod = require("zod");
-var createParamsSchema = import_zod.z.object({
-  id: import_zod.z.string()
-});
-var createAnoSchema = import_zod.z.object({
+var _AnoDTO = class {
+  constructor(data) {
+    __publicField(this, "id");
+    __publicField(this, "descricao");
+    const validateData = _AnoDTO.schema.parse(data);
+    this.id = validateData.id;
+    this.descricao = validateData.descricao;
+  }
+};
+var AnoDTO = _AnoDTO;
+__name(AnoDTO, "AnoDTO");
+__publicField(AnoDTO, "schema", import_zod.z.object({
   id: import_zod.z.string().optional(),
   descricao: import_zod.z.string()
+}));
+
+// src/presentation/controllers/ano/AnoController.ts
+var paramsSchema = import_zod2.z.object({
+  id: import_zod2.z.string()
 });
 var AnoController = class {
   constructor(service) {
@@ -268,7 +307,7 @@ var AnoController = class {
     this.service = service;
   }
   async create(request, reply) {
-    const anoDTO = createAnoSchema.parse(request.body);
+    const anoDTO = new AnoDTO(request.body);
     const created = await this.service.create(anoDTO);
     return reply.status(201).send(created);
   }
@@ -276,11 +315,11 @@ var AnoController = class {
     return await this.service.get();
   }
   async getById(request) {
-    const param = createParamsSchema.parse(request.params);
+    const param = paramsSchema.parse(request.params);
     return await this.service.getById(param.id);
   }
   async delete(request, reply) {
-    const param = createParamsSchema.parse(request.params);
+    const param = paramsSchema.parse(request.params);
     if (param.id == void 0) {
       return reply.status(500).send("Not found");
     }
@@ -291,8 +330,8 @@ var AnoController = class {
     return reply.status(201).send(result);
   }
   async update(request, reply) {
-    const param = createParamsSchema.parse(request.params);
-    const anoDTO = createAnoSchema.parse(request.body);
+    const param = paramsSchema.parse(request.params);
+    const anoDTO = new AnoDTO(request.body);
     anoDTO.id = param.id;
     const created = await this.service.update(anoDTO);
     return reply.status(201).send(created);
@@ -300,39 +339,13 @@ var AnoController = class {
 };
 __name(AnoController, "AnoController");
 
-// src/infrastructure/crosscutting/adapter/mappers/aplication/AnoAppMapper.ts
-var _AnoAppMapper = class {
-  constructor() {
-  }
-  static getInstance() {
-    if (!_AnoAppMapper.instance) {
-      _AnoAppMapper.instance = new _AnoAppMapper();
-    }
-    return _AnoAppMapper.instance;
-  }
-  toEntity(raw) {
-    return Ano.create({
-      descricao: raw.descricao
-    }, raw.id);
-  }
-  toDTO(ano) {
-    return Result.ok({
-      id: ano.id,
-      descricao: ano.props.descricao
-    });
-  }
-};
-var AnoAppMapper = _AnoAppMapper;
-__name(AnoAppMapper, "AnoAppMapper");
-__publicField(AnoAppMapper, "instance");
-
-// src/aplication/services/ano/AnoAppService.ts
+// src/aplication/services/ano/usecases/AnoAppService.ts
 var AnoAppService = class {
   constructor(service) {
     __publicField(this, "service");
     __publicField(this, "mapper");
     this.service = service;
-    this.mapper = AnoAppMapper.getInstance();
+    this.mapper = AnoMapper.getInstance();
   }
   async get() {
     const results = await this.service.get();
@@ -358,7 +371,7 @@ var AnoAppService = class {
     return dto;
   }
   async create(dto) {
-    const entity = this.mapper.toEntity(dto);
+    const entity = this.mapper.toDomain(dto);
     if (entity.isFailure) {
       return Result.fail(entity.error ?? "");
     }
@@ -380,7 +393,7 @@ var AnoAppService = class {
     return this.mapper.toDTO(result.getValue());
   }
   async update(dto) {
-    const entity = this.mapper.toEntity(dto);
+    const entity = this.mapper.toDomain(dto);
     if (entity.isFailure) {
       return Result.fail(entity.error ?? "");
     }
@@ -397,27 +410,29 @@ var AnoAppService = class {
 };
 __name(AnoAppService, "AnoAppService");
 
-// src/presentation/router/routes/ano/RouteAno.ts
+// src/presentation/router/ano/RouteAno.ts
 var RouteAno = class {
   constructor(controller) {
     __publicField(this, "controller");
+    __publicField(this, "route");
     this.controller = controller;
+    this.route = "ano";
   }
   registerRoutes(app) {
-    app.post("/ano", (request, reply) => {
-      this.controller.create(request, reply);
+    app.post(`/${this.route}`, async (request, reply) => {
+      await this.controller.create(request, reply);
     });
-    app.get("/ano", async (request) => {
-      return await this.controller.get(request);
+    app.get(`/${this.route}`, async (request) => {
+      return this.controller.get(request);
     });
-    app.get("/ano/:id", async (request, reply) => {
-      return await this.controller.getById(request, reply);
+    app.get(`/${this.route}/:id`, async (request, reply) => {
+      return this.controller.getById(request, reply);
     });
-    app.delete("/ano/:id", async (request, reply) => {
-      return await this.controller.delete(request, reply);
+    app.delete(`/${this.route}/:id`, async (request, reply) => {
+      return this.controller.delete(request, reply);
     });
-    app.put("/ano/:id", async (request, reply) => {
-      return await this.controller.update(request, reply);
+    app.put(`/${this.route}/:id`, async (request, reply) => {
+      return this.controller.update(request, reply);
     });
   }
 };
@@ -438,15 +453,15 @@ var Pactuacao = class extends Entity {
 };
 __name(Pactuacao, "Pactuacao");
 
-// src/infrastructure/crosscutting/adapter/mappers/domain/PactuacaoDomainMapper.ts
-var _PactuacaoDomainMapper = class {
+// src/infrastructure/crosscutting/adapter/mappers/PactuacaoMapper.ts
+var _PactuacaoMapper = class {
   constructor() {
   }
   static getInstance() {
-    if (!_PactuacaoDomainMapper.instance) {
-      _PactuacaoDomainMapper.instance = new _PactuacaoDomainMapper();
+    if (!_PactuacaoMapper.instance) {
+      _PactuacaoMapper.instance = new _PactuacaoMapper();
     }
-    return _PactuacaoDomainMapper.instance;
+    return _PactuacaoMapper.instance;
   }
   toDomain(raw) {
     const result = Pactuacao.create({
@@ -467,128 +482,35 @@ var _PactuacaoDomainMapper = class {
       return Result.fail("Fail to parse to persistence format");
     }
   }
+  toDTO(object) {
+    return Result.ok({
+      id: object.id,
+      descricao: object.props.descricao,
+      programa: object.props.programa
+    });
+  }
 };
-var PactuacaoDomainMapper = _PactuacaoDomainMapper;
-__name(PactuacaoDomainMapper, "PactuacaoDomainMapper");
-__publicField(PactuacaoDomainMapper, "instance");
+var PactuacaoMapper = _PactuacaoMapper;
+__name(PactuacaoMapper, "PactuacaoMapper");
+__publicField(PactuacaoMapper, "instance");
 
 // src/infrastructure/data/repository/pactuacao/PactuacaoRepositorio.ts
-var PactuacaoRepositorio = class {
+var PactuacaoRepositorio = class extends RepositorioBase {
   constructor() {
-    __publicField(this, "prisma");
-    __publicField(this, "mapper");
-    this.prisma = PrismaContext.getInstance();
-    this.mapper = PactuacaoDomainMapper.getInstance();
-  }
-  async get() {
-    const registersDTO = await this.prisma.pactuacao.findMany();
-    const registers = registersDTO.map((register) => this.mapper.toDomain(register));
-    if (registers.some((x) => x.isFailure)) {
-      return Result.fail("Fail to parse some");
-    } else {
-      return Result.ok(registers.map((x) => x.getValue()));
-    }
-  }
-  async create(param) {
-    const dto = this.mapper.toPersistence(param);
-    if (dto.isFailure) {
-      return Result.fail(dto.error ?? "");
-    }
-    const createdDTO = await this.prisma.pactuacao.create({
-      data: dto.getValue()
-    });
-    const created = this.mapper.toDomain(createdDTO);
-    return created;
-  }
-  async update(param) {
-    const dto = this.mapper.toPersistence(param);
-    const updatedDTO = await this.prisma.pactuacao.update({
-      where: {
-        id: param.id
-      },
-      data: dto.getValue()
-    });
-    const updated = this.mapper.toDomain(updatedDTO);
-    return updated;
-  }
-  async delete(param) {
-    const result = await this.prisma.pactuacao.delete({
-      where: {
-        id: param.id
-      }
-    });
-    return Result.ok(param);
-  }
-  async getById(id) {
-    const dto = await this.prisma.pactuacao.findUnique({
-      where: {
-        id
-      }
-    });
-    if (dto == null) {
-      return Result.fail("Not found");
-    } else {
-      return this.mapper.toDomain(dto);
-    }
+    const { pactuacao } = PrismaContext.getInstance();
+    const mapper = PactuacaoMapper.getInstance();
+    super(mapper, pactuacao);
   }
 };
 __name(PactuacaoRepositorio, "PactuacaoRepositorio");
 
 // src/domain/pactuacao/services/PactuacaoService.ts
-var PactuacaoService = class {
+var PactuacaoService = class extends ServiceBase {
   constructor(repo) {
-    __publicField(this, "repo");
-    this.repo = repo;
-  }
-  async get() {
-    return this.repo.get();
-  }
-  async getById(id) {
-    return this.repo.getById(id);
-  }
-  async create(param) {
-    return this.repo.create(param);
-  }
-  async update(param) {
-    return this.repo.update(param);
-  }
-  async delete(id) {
-    const register = await this.getById(id);
-    if (register.isFailure) {
-      return Result.fail(register.error ?? "");
-    }
-    return this.repo.delete(register.getValue());
+    super(repo);
   }
 };
 __name(PactuacaoService, "PactuacaoService");
-
-// src/infrastructure/crosscutting/adapter/mappers/aplication/PactuacaoAppMapper.ts
-var _PactuacaoAppMapper = class {
-  constructor() {
-  }
-  static getInstance() {
-    if (!_PactuacaoAppMapper.instance) {
-      _PactuacaoAppMapper.instance = new _PactuacaoAppMapper();
-    }
-    return _PactuacaoAppMapper.instance;
-  }
-  toEntity(raw) {
-    return Pactuacao.create({
-      descricao: raw.descricao,
-      programa: raw.programa
-    }, raw.id);
-  }
-  toDTO(dto) {
-    return Result.ok({
-      id: dto.id,
-      descricao: dto.props.descricao,
-      programa: dto.props.programa
-    });
-  }
-};
-var PactuacaoAppMapper = _PactuacaoAppMapper;
-__name(PactuacaoAppMapper, "PactuacaoAppMapper");
-__publicField(PactuacaoAppMapper, "instance");
 
 // src/aplication/services/pactuacao/PactuacaoAppService.ts
 var PactuacaoAppService = class {
@@ -596,7 +518,7 @@ var PactuacaoAppService = class {
     __publicField(this, "service");
     __publicField(this, "mapper");
     this.service = service;
-    this.mapper = PactuacaoAppMapper.getInstance();
+    this.mapper = PactuacaoMapper.getInstance();
   }
   async get() {
     const results = await this.service.get();
@@ -622,7 +544,7 @@ var PactuacaoAppService = class {
     return dto;
   }
   async create(dto) {
-    const entity = this.mapper.toEntity(dto);
+    const entity = this.mapper.toDomain(dto);
     if (entity.isFailure) {
       return Result.fail(entity.error ?? "");
     }
@@ -644,7 +566,7 @@ var PactuacaoAppService = class {
     return this.mapper.toDTO(result.getValue());
   }
   async update(dto) {
-    const entity = this.mapper.toEntity(dto);
+    const entity = this.mapper.toDomain(dto);
     if (entity.isFailure) {
       return Result.fail(entity.error ?? "");
     }
@@ -661,7 +583,7 @@ var PactuacaoAppService = class {
 };
 __name(PactuacaoAppService, "PactuacaoAppService");
 
-// src/presentation/router/routes/pactuacao/RoutePactuacao.ts
+// src/presentation/router/pactuacao/RoutePactuacao.ts
 var RoutePactuacao = class {
   constructor(controller) {
     __publicField(this, "controller");
@@ -688,14 +610,32 @@ var RoutePactuacao = class {
 __name(RoutePactuacao, "RoutePactuacao");
 
 // src/presentation/controllers/pactuacao/PactuacaoController.ts
-var import_zod2 = require("zod");
-var createParamsSchema2 = import_zod2.z.object({
-  id: import_zod2.z.string()
-});
-var createPactuacaoSchema = import_zod2.z.object({
-  id: import_zod2.z.string().optional(),
-  descricao: import_zod2.z.string(),
-  programa: import_zod2.z.string()
+var import_zod4 = require("zod");
+
+// src/aplication/services/pactuacao/dtos/PactuacaoDTO.ts
+var import_zod3 = require("zod");
+var _PactuacaoDTO = class {
+  constructor(data) {
+    __publicField(this, "id");
+    __publicField(this, "descricao");
+    __publicField(this, "programa");
+    const validateData = _PactuacaoDTO.schema.parse(data);
+    this.id = validateData.id;
+    this.programa = validateData.programa;
+    this.descricao = validateData.descricao;
+  }
+};
+var PactuacaoDTO = _PactuacaoDTO;
+__name(PactuacaoDTO, "PactuacaoDTO");
+__publicField(PactuacaoDTO, "schema", import_zod3.z.object({
+  id: import_zod3.z.string().optional(),
+  descricao: import_zod3.z.string(),
+  programa: import_zod3.z.string()
+}));
+
+// src/presentation/controllers/pactuacao/PactuacaoController.ts
+var paramsSchema2 = import_zod4.z.object({
+  id: import_zod4.z.string()
 });
 var PactuacaoController = class {
   constructor(service) {
@@ -703,7 +643,7 @@ var PactuacaoController = class {
     this.service = service;
   }
   async create(request, reply) {
-    const dto = createPactuacaoSchema.parse(request.body);
+    const dto = new PactuacaoDTO(request.body);
     const created = await this.service.create(dto);
     return reply.status(201).send(created);
   }
@@ -711,11 +651,11 @@ var PactuacaoController = class {
     return await this.service.get();
   }
   async getById(request) {
-    const param = createParamsSchema2.parse(request.params);
+    const param = paramsSchema2.parse(request.params);
     return await this.service.getById(param.id);
   }
   async delete(request, reply) {
-    const param = createParamsSchema2.parse(request.params);
+    const param = paramsSchema2.parse(request.params);
     if (param.id == void 0) {
       return reply.status(500).send("Not found");
     }
@@ -726,8 +666,8 @@ var PactuacaoController = class {
     return reply.status(201).send(result);
   }
   async update(request, reply) {
-    const param = createParamsSchema2.parse(request.params);
-    const anoDTO = createPactuacaoSchema.parse(request.body);
+    const param = paramsSchema2.parse(request.params);
+    const anoDTO = new PactuacaoDTO(request.body);
     anoDTO.id = param.id;
     const created = await this.service.update(anoDTO);
     return reply.status(201).send(created);
